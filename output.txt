@@ -1,0 +1,28 @@
+Test 1:
+Ininial Tape
+#####111###
+     ^     
+Final Tape
+#####1111##
+     ^     
+Test 2:
+Ininial Tape
+###1111##
+   ^     
+Final Tape
+###11111#
+   ^     
+Test 3:
+Ininial Tape
+##11111##
+  ^      
+Final Tape
+##111111#
+  ^      
+Test 4:
+Ininial Tape
+#####
+  ^  
+Final Tape
+##1##
+  ^  
