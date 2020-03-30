@@ -198,7 +198,10 @@ struct TuringMachine {
 
 TuringMachine machine;
 
-int main() {
+int main(int argc, char** argv) {
+
+	bool debug = argc > 1 && strcmp(argv[1], "-d")==0;
+
 	freopen("input.txt", "r", stdin);
 	freopen("output.txt", "w", stdout);
 	
@@ -208,6 +211,6 @@ int main() {
 	scanf("%d", &NTest);
 	for (int iTest = 1; iTest <= NTest; iTest++) {
 		printf("Test %d:\n", iTest);
-		machine.readAndRun(false);
+		machine.readAndRun(debug);
 	}
 }
