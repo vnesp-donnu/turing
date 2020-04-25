@@ -11,7 +11,7 @@ struct DeltaValue {
 	int newState;
 	short shift;
 	
-	void read(int defaultState, char defaultChar) {
+	bool read(int defaultState, char defaultChar) {
 		newChar = defaultChar;
 		shift = 0;
 		newState = defaultState;
@@ -19,10 +19,11 @@ struct DeltaValue {
 		char buffer[100];
 		
 		scanf("%s", buffer);
+		// printf("%d, %c -> %s\n", defaultState, defaultChar, buffer);
 		char *s = buffer;
 		if (s[0] == '-' && s[1] == 0) {
 			newState = -1;
-			return;
+			return true;
 		}
 		
 		if (*s != ',')
@@ -30,7 +31,7 @@ struct DeltaValue {
 		
 		if (*s != ',') {
 			printf("Invalid char in state %d for char %c", defaultState, defaultChar);
-			return;
+			return false;
 		}
 		
 		s++;
@@ -41,18 +42,35 @@ struct DeltaValue {
 
 		if (*s != ',') {
 			printf("Invalid shift in state %d for char %c", defaultState, defaultChar);
-			return;
+			return false;
 		}
 
 		s++;
-		if (*s)
-			sscanf(s, "%d", &newState);
+		if (*s) {
+			if (*s == 'q')
+				s++;
+			if (sscanf(s, "%d", &newState) != 1 || newState < 0) {
+				printf("Invalid state in state %d for char %c", defaultState, defaultChar);
+				return false;
+			}
+		}
 		
 		// printf("%c,%d,%d\t", newChar, shift, newState);
+		return true;
 	}
 	
 	void print() const {
 		printf("newChar = '%c', shift = %hd, newState = %d\n", newChar, shift, newState); 
+	}
+};
+
+struct Answer {
+	int pos;
+	char strip[2 * MaxTapeLen + 1];
+	
+	void read() {
+		scanf("%d", &pos);
+		scanf("%s", strip);
 	}
 };
 
@@ -74,6 +92,12 @@ struct Tape {
 		scanf("%s", strip + pos);
 		strip[pos + strlen(strip + pos)] = emptyChar;
 		scanf("%d", &pos);
+	}
+	
+	bool check(const Answer& ans) {
+		int len = strlen(ans.strip);
+		int shift = pos - ans.pos;
+		return strncmp(ans.strip, strip + shift, len) == 0;
 	}
 	
 	char get() {
@@ -109,6 +133,7 @@ struct TuringMachine {
 	DeltaValue delta[MaxQSize][MaxASize];
 	int invA[256];
 	Tape tape;
+	Answer ans;
 	int state;
 	
 	void makeinvA() {
@@ -119,7 +144,7 @@ struct TuringMachine {
 			invA[c] = i;
 	}
 	
-	void read() {
+	bool read() {
 		scanf("%d", &QSize);
 		scanf("%s", A);
 		// puts(A);
@@ -127,7 +152,9 @@ struct TuringMachine {
 		makeinvA();
 		for (int q = 0; q < QSize; q++)
 			for (int i = 0; i < ASize; i++)
-				delta[q][i].read(q, A[i]);
+				if (!delta[q][i].read(q, A[i]))
+					return false;
+		return true;
 	}
 	
 	void init() {
@@ -136,6 +163,10 @@ struct TuringMachine {
 
 	void readTape() {
 		tape.read(A[0]);
+	}
+	
+	void readAnswer() {
+		ans.read();
 	}
 
 	bool stepOver(bool debug) {
@@ -173,7 +204,7 @@ struct TuringMachine {
 			time++;
 			if (time > MAX_TIME) {
 				puts("Time Limit Exceeded");
-				break;
+				return false;
 			}
 			if (debug)
 				printf("Turn #%d:\n", time);
@@ -185,14 +216,17 @@ struct TuringMachine {
 	
 	void readAndRun(bool debug) {
 		readTape();
+		readAnswer();
 		puts("Ininial Tape");
 		tape.print();
 		if (run(debug)) {
 			puts("Final Tape");
 			tape.print();
+			puts(tape.check(ans) ? "OK!" : "Wrong Answer");
 		}
 		else
 			puts("Error!");
+		puts("");
 	}
 };
 
@@ -200,17 +234,32 @@ TuringMachine machine;
 
 int main(int argc, char** argv) {
 
-	bool debug = argc > 1 && strcmp(argv[1], "-d")==0;
-
-	freopen("input.txt", "r", stdin);
-	freopen("output.txt", "w", stdout);
-	
-	machine.read();
-
-	int NTest;
-	scanf("%d", &NTest);
-	for (int iTest = 1; iTest <= NTest; iTest++) {
-		printf("Test %d:\n", iTest);
-		machine.readAndRun(debug);
+	if (argc < 2) {
+		printf("Usage: turing <input_file> <output_file> [option]\n");
+		printf("Option:\n");
+		printf("  -d -- output debug information\n");
+		return -1;
 	}
+	
+	if (freopen(argv[1], "r", stdin) == NULL) {
+		printf("File %s: reading error", argv[1]);
+		return -1;
+	}
+	
+	if (freopen(argv[2], "w", stdout) == NULL) {
+		printf("File %s: creating error", argv[2]);
+		return -1;
+	}
+
+	bool debug = argc > 3 && strcmp(argv[3], "-d")==0;
+	
+	if ( machine.read() ) {
+		int NTest;
+		scanf("%d", &NTest);
+		for (int iTest = 1; iTest <= NTest; iTest++) {
+			printf("Test %d:\n", iTest);
+			machine.readAndRun(debug);
+		}
+	}
+	
 }
