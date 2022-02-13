@@ -11,7 +11,7 @@ struct DeltaValue {
 	int newState;
 	short shift;
 	
-	bool read(int defaultState, char defaultChar) {
+	bool read(int defaultState, char defaultChar, bool debug) {
 		newChar = defaultChar;
 		shift = 0;
 		newState = defaultState;
@@ -19,7 +19,8 @@ struct DeltaValue {
 		char buffer[100];
 		
 		scanf("%s", buffer);
-		// printf("%d, %c -> %s\n", defaultState, defaultChar, buffer);
+		if (debug)
+			printf("%d, %c -> %s\n", defaultState, defaultChar, buffer);
 		char *s = buffer;
 		if (s[0] == '-' && s[1] == 0) {
 			newState = -1;
@@ -144,7 +145,7 @@ struct TuringMachine {
 			invA[c] = i;
 	}
 	
-	bool read() {
+	bool read(bool debug) {
 		scanf("%d", &QSize);
 		scanf("%s", A);
 		// puts(A);
@@ -152,7 +153,7 @@ struct TuringMachine {
 		makeinvA();
 		for (int q = 0; q < QSize; q++)
 			for (int i = 0; i < ASize; i++)
-				if (!delta[q][i].read(q, A[i]))
+				if (!delta[q][i].read(q, A[i], debug))
 					return false;
 		return true;
 	}
@@ -186,7 +187,7 @@ struct TuringMachine {
 			cur.print();
 		tape.put(cur.newChar);
 		if (!tape.move(cur.shift)) {
-			puts("Position ouf of range");
+			puts("Position out of range");
 			return false;
 		}
 		state = cur.newState;
@@ -234,7 +235,7 @@ TuringMachine machine;
 
 int main(int argc, char** argv) {
 
-	if (argc < 2) {
+	if (argc < 3) {
 		printf("Usage: turing <input_file> <output_file> [option]\n");
 		printf("Option:\n");
 		printf("  -d -- output debug information\n");
@@ -253,7 +254,7 @@ int main(int argc, char** argv) {
 
 	bool debug = argc > 3 && strcmp(argv[3], "-d")==0;
 	
-	if ( machine.read() ) {
+	if ( machine.read(debug) ) {
 		int NTest;
 		scanf("%d", &NTest);
 		for (int iTest = 1; iTest <= NTest; iTest++) {
